@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [develop, qa]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Anexo J -db layout
+        run: |
+          test -f 01_ddl/V001__create_occupancy.sql
+          test -f 03_dcl/V002__table_grants_availability_app.sql
+          test -f 05_rollbacks/U001__drop_occupancy.sql
+          test -f deploy/compose.yml
+          ! grep -E "image: postgres" deploy/compose.yml
+          grep -q "availability.occupancy" 01_ddl/V001__create_occupancy.sql
