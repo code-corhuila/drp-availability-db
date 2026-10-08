@@ -1,0 +1,27 @@
+# Migrate-only (Anexo J). No Postgres container. Infra must be up first.
+
+name: ${COMPOSE_PROJECT_NAME:-drp-dev}
+
+services:
+  availability-migrate:
+    image: flyway/flyway:10
+    container_name: drp-availability-migrate
+    command: -connectRetries=12 migrate
+    environment:
+      FLYWAY_URL: ${FLYWAY_URL:-jdbc:postgresql://postgres:5432/drp}
+      FLYWAY_USER: ${FLYWAY_USER:-availability_app}
+      FLYWAY_PASSWORD: ${FLYWAY_PASSWORD:-change-me-availability}
+      FLYWAY_SCHEMAS: availability
+      FLYWAY_DEFAULT_SCHEMA: availability
+      FLYWAY_TABLE: flyway_availability_history
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql/ddl,filesystem:/flyway/sql/dcl
+    volumes:
+      - ../01_ddl:/flyway/sql/ddl:ro
+      - ../03_dcl:/flyway/sql/dcl:ro
+    networks:
+      - pg
+
+networks:
+  pg:
+    name: ${AVAILABILITY_DB_NETWORK:-drp-dev_default}
+    external: true
